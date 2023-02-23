@@ -47,3 +47,9 @@ petitfils(X,Y):- petitenfant(X,Y),homme(X).
 sum(X,Y,R):- R is X+Y.
 max2(X,Y,M):- X>=Y, M is X; X<Y, M is Y.
 max3(X,Y,Z,M):- max2(X,Y,M1), max2(M1,Z,M).
+
+longueur([],0).
+longueur([_|T],N):- longueur(T,N1), N is N1+1.
+
+max([A],A).
+max([A|T],M):- max(T,M1),max2(M1,A,M).
