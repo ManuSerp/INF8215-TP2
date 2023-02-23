@@ -53,3 +53,6 @@ longueur([_|T],N):- longueur(T,N1), N is N1+1.
 
 max([A],A).
 max([A|T],M):- max(T,M1),max2(M1,A,M).
+
+somme([],0).
+somme([A|T],S):- somme(T,S1), S is S1+A.
