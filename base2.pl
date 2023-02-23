@@ -42,3 +42,8 @@ grandpere(X,Y):- grandparent(X,Y),homme(X).
 petitenfant(X,Y):- grandparent(Y,X).
 petitefille(X,Y):- petitenfant(X,Y),femme(X).
 petitfils(X,Y):- petitenfant(X,Y),homme(X).
+
+
+sum(X,Y,R):- R is X+Y.
+max2(X,Y,M):- X>=Y, M is X; X<Y, M is Y.
+max3(X,Y,Z,M):- max2(X,Y,M1), max2(M1,Z,M).
