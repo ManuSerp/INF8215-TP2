@@ -1,4 +1,5 @@
 
+import csv
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -11,6 +12,21 @@ from sklearn.metrics import mean_squared_error
 from sklearn.preprocessing import normalize
 # Make NumPy printouts easier to read.
 np.set_printoptions(precision=3, suppress=True)
+
+
+def submission(L):
+    test = open("test.csv", "r")
+    with open("submission.csv", "w") as f:
+        writer = csv.writer(f)
+        reader = csv.reader(test)
+
+        writer.writerow(["url", "status"])
+        for i, row in enumerate(reader):
+            if i == 0:
+                continue
+            var = "phishing" if L[i-1] == 1 else "legitimate"
+            writer.writerow([row[1], var])
+    test.close()
 
 
 def filter(L):
@@ -49,15 +65,24 @@ def build_set(path):
     return x, y
 
 
-# Define Grid
+def build_submit_set(path):
+    df = pd.read_csv(path, header=0)
+    x = df._get_numeric_data()
+    x = x.drop(columns=['Unnamed: 0'])
+    x = x.to_numpy()
+    x = normalize(x, axis=0)
+    return x
+
+
+# # Define Grid
 x_train, y_train = build_set("train.csv")
 x_train, x_test, y_train, y_test = train_test_split(
     x_train, y_train, test_size=0.3, shuffle=True)
 
 grid = {
-    'n_estimators': [500, 600, 800],
+    'n_estimators': [900, 1000, 1200, 1500],
     'max_features': ['sqrt'],
-    'max_depth': [16, 20, 24, 28, 32],
+    'max_depth': [26, 28, 30],
     'random_state': [18]
 }  # show start time
 print(datetime.now())  # Grid Search function
@@ -68,11 +93,27 @@ print(datetime.now())
 print("\n The best parameters across ALL searched params:\n", CV_rfr.best_params_)
 
 
-# rf = RandomForestClassifier(
-#     n_estimators=400, max_features='sqrt', max_depth=7, random_state=18)
+# rf = RandomForestRegressor(
+#     n_estimators=1000, max_features='sqrt', max_depth=24, random_state=18)
 
 # rf.fit(x_train, y_train)
 
+#  {'max_depth': 26, 'max_features': 'sqrt', 'n_estimators': 800, 'random_state': 18} 0.9665
+
+# {'max_depth': 24, 'max_features': 'sqrt', 'n_estimators': 1000, 'random_state': 18}
+# Accuracy:  0.968189233278956
+
+
+# {'max_depth': 28, 'max_features': 'sqrt', 'n_estimators': 1000, 'random_state': 18}
+# Accuracy:  0.9706362153344209
+
+
 prediction = filter(CV_rfr.predict(x_test))
 
+x_test_submit = build_submit_set("test.csv")
+
+# prediction = filter(rf.predict(x_test))
+
 print("Accuracy: ", compute_accuracy(y_test, prediction))
+
+# submission(prediction)
