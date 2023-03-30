@@ -1,34 +1,63 @@
-from tensorflow.keras import layers
-from tensorflow import keras
-import tensorflow as tf
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
 from datetime import datetime
 from sklearn.datasets import fetch_openml
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import mean_squared_error
-
+from sklearn.preprocessing import normalize
 # Make NumPy printouts easier to read.
 np.set_printoptions(precision=3, suppress=True)
 
 
-print(tf.__version__)
+def filter(L):
+    res = []
+    for i in L:
+        if i > 0.5:
+            res.append(1)
+        else:
+            res.append(0)
+    return res
 
 
-diamonds = fetch_openml('diamonds', version=1, as_frame=False)
+def compute_accuracy(Y_true, Y_pred):
+    correctly_predicted = 0
+    # iterating over every label and checking it with the true sample
+    for true_label, predicted in zip(Y_true, Y_pred):
+        if true_label == predicted:
+            correctly_predicted += 1
+    # computing the accuracy score
+    accuracy_score = correctly_predicted / len(Y_true)
+    return accuracy_score
 
 
-x_train, x_test, y_train, y_test = train_test_split(
-    diamonds["data"], diamonds["target"], shuffle=True)
+def build_set(path):
+    df = pd.read_csv(path, header=0)
+    x = df._get_numeric_data()
+    x = x.drop(columns=['Unnamed: 0'])
+    x = x.to_numpy()
+    x = normalize(x, axis=0)
+    y = df["status"].to_numpy()
+    for i, s in enumerate(y):
+        if s == "phishing":
+            y[i] = 1
+        else:
+            y[i] = 0
+    return x, y
+
 
 # Define Grid
+x_train, y_train = build_set("train.csv")
+x_train, x_test, y_train, y_test = train_test_split(
+    x_train, y_train, test_size=0.3, shuffle=True)
+
 grid = {
-    'n_estimators': [200, 300, 400, 500],
-    'max_features': ['sqrt', 'log2'],
-    'max_depth': [3, 4, 5, 6, 7],
+    'n_estimators': [500, 600, 800],
+    'max_features': ['sqrt'],
+    'max_depth': [16, 20, 24, 28, 32],
     'random_state': [18]
 }  # show start time
 print(datetime.now())  # Grid Search function
@@ -37,19 +66,13 @@ CV_rfr = GridSearchCV(estimator=RandomForestRegressor(),
 CV_rfr.fit(x_train, y_train)  # show end time
 print(datetime.now())
 print("\n The best parameters across ALL searched params:\n", CV_rfr.best_params_)
-#  {'max_depth': 7, 'max_features': 'sqrt', 'n_estimators': 300, 'random_state': 18}
 
-# [CV 4/5; 40/40] END max_depth=7, max_features=log2, n_estimators=500, random_state=18;, score=0.954 total time=   8.5s
 
-# rf = RandomForestRegressor(
-#     n_estimators=300, max_features='sqrt', max_depth=5, random_state=18)
+# rf = RandomForestClassifier(
+#     n_estimators=400, max_features='sqrt', max_depth=7, random_state=18)
 
 # rf.fit(x_train, y_train)
 
-prediction = CV_rfr.predict(x_test)
-print(prediction)
-print(y_test)
-mse = mean_squared_error(y_test, prediction)
-rmse = mse**.5
-print(mse)
-print(rmse)
+prediction = filter(CV_rfr.predict(x_test))
+
+print("Accuracy: ", compute_accuracy(y_test, prediction))
