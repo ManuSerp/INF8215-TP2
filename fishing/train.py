@@ -41,12 +41,15 @@ def build_set(path):
     x = x.to_numpy()
     x = normalize(x, axis=0)
     y = df["status"].map({'legitimate': 0, 'phishing': 1})
-    # y = df["status"].to_numpy()
-    # for i, s in enumerate(y):
-    #     if s == "phishing":
-    #         y[i] = [0, 1]
-    #     else:
-    #         y[i] = [1, 0]
+    # f = plt.figure(figsize=(25, 20))
+    # plt.matshow(df.corr(), fignum=f.number)
+    # plt.xticks(range(df.select_dtypes(['number']).shape[1]), df.select_dtypes(['number']).columns, fontsize=12,
+    #            rotation=45)
+    # plt.yticks(range(df.select_dtypes(['number']).shape[1]), df.select_dtypes(['number']).columns, fontsize=12)
+    # cb = plt.colorbar()
+    # cb.ax.tick_params(labelsize=14)
+    # plt.title('Correlation Matrix', fontsize=16)
+    # plt.show()
     return x, y
 
 
@@ -73,10 +76,10 @@ print(datetime.now())
 print("\n The best parameters across ALL searched params:\n", CV_rfr.best_params_)
 
 
-# rf = RandomForestClassifier(n_estimators=1200, max_features='sqrt', max_depth=28, random_state=18)
+rf = RandomForestClassifier(n_estimators=1200, max_features='sqrt', max_depth=28, random_state=18)
 
-# rf.fit(x_train, y_train)
-# print(rf.predict(x_test))
+rf.fit(x_train, y_train)
+print(rf.predict(x_test))
 prediction = filter(CV_rfr.predict(x_test))
 
 print("Accuracy: ", compute_accuracy(y_test, prediction))
