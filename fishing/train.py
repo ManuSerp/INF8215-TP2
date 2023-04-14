@@ -119,15 +119,7 @@ def build_set(path):
     x = x.to_numpy()
     x = normalize(x, axis=0)
     y = df["status"].map({'legitimate': 0, 'phishing': 1})
-    # f = plt.figure(figsize=(25, 20))
-    # plt.matshow(df.corr(), fignum=f.number)
-    # plt.xticks(range(df.select_dtypes(['number']).shape[1]), df.select_dtypes(['number']).columns, fontsize=12,
-    #            rotation=45)
-    # plt.yticks(range(df.select_dtypes(['number']).shape[1]), df.select_dtypes(['number']).columns, fontsize=12)
-    # cb = plt.colorbar()
-    # cb.ax.tick_params(labelsize=14)
-    # plt.title('Correlation Matrix', fontsize=16)
-    # plt.show()
+   
     return x, y
 
 
@@ -151,15 +143,16 @@ CV_rf = GridSearchCV(estimator=RandomForestClassifier(),
 # Calling Method
 
 CV_rf.fit(x_train, y_train)
-plot_grid_search(CV_rf.cv_results_, grid['n_estimators'], grid['max_depth'], 'N Estimators', 'Max Depth')
+## uncomment here to plot he gridSearch graph
+#plot_grid_search(CV_rf.cv_results_, grid['n_estimators'], grid['max_depth'], 'N Estimators', 'Max Depth')
 
 # show end time
 print(datetime.now())
-# print("\n The best parameters across ALL searched params:\n", rf.best_params_)
+print("\n The best parameters across ALL searched params:\n", rf.best_params_)
 
 rf = RandomForestClassifier(n_estimators=CV_rf.best_params_["n_estimators"], max_features='sqrt',
                             max_depth=CV_rf.best_params_["max_depth"], random_state=CV_rf.best_params_["random_state"])
-# rf = RandomForestClassifier(n_estimators=1200, max_features='sqrt', max_depth=24, random_state=18)
+
 
 rf.fit(x_train, y_train)
 print(rf.predict(x_test))
