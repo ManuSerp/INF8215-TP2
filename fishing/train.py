@@ -1,7 +1,8 @@
-import matplotlib.pyplot as plt
+import sys
 import numpy as np
+import matplotlib.pyplot as plt
 import pandas as pd
-import seaborn as sns
+import pathlib as pathlib
 from datetime import datetime
 import csv
 from sklearn.ensemble import RandomForestClassifier
@@ -12,9 +13,16 @@ from sklearn.preprocessing import normalize
 # Make NumPy printouts easier to read.
 np.set_printoptions(precision=3, suppress=True)
 
+if (len(sys.argv) != 3):
+    exit("ERREUR : Ce script de vérification de solution prend 2 arguments en entrée (train data path et test data path).")
+if (not pathlib.Path(sys.argv[1]).is_file()):
+    exit("ERREUR : Fichier " + sys.argv[1] + " inexistant.")
+if (not pathlib.Path(sys.argv[2]).is_file()):
+    exit("ERREUR : Fichier " + sys.argv[2] + " inexistant.")
 
-def submission(L):
-    test = open("test.csv", "r")
+
+def submission(L, path_test_dataset):
+    test = open(path_test_dataset, "r")
     with open("submission.csv", "w") as f:
         writer = csv.writer(f)
         reader = csv.reader(test)
@@ -42,7 +50,6 @@ def build_submit_set(path):
                         "dns_record", "google_index", "page_rank"]
     x = df[selected_columns]
     x = x._get_numeric_data()
-    # x = x.drop(columns=['Unnamed: 0'])
     x = x.to_numpy()
     x = normalize(x, axis=0)
     return x
@@ -81,13 +88,14 @@ def build_submit_set(path):
 def plot_grid_search(cv_results, grid_param_1, grid_param_2, name_param_1, name_param_2):
     # Get Test Scores Mean and std for each grid search
     scores_mean = cv_results['mean_test_score']
-    scores_mean = np.array(scores_mean).reshape(1, len(cv_results['params']))
+    scores_mean = np.array(scores_mean).reshape(len(grid_param_2), len(grid_param_1))
 
     scores_sd = cv_results['std_test_score']
-    scores_sd = np.array(scores_sd).reshape(1, len(cv_results['params']))
+    scores_sd = np.array(scores_sd).reshape(len(grid_param_2), len(grid_param_1))
 
     # Plot Grid search scores
-    _, ax = plt.subplots(1, 1)
+    fig, ax = plt.subplots(1, 1)
+    fig.set_size_inches(10, 6)
 
     # Param1 is the X-axis, Param 2 is represented as a different curve (color line)
     for idx, val in enumerate(grid_param_2):
@@ -119,32 +127,33 @@ def build_set(path):
     x = x.to_numpy()
     x = normalize(x, axis=0)
     y = df["status"].map({'legitimate': 0, 'phishing': 1})
-   
+
     return x, y
 
 
 # Define Grid
-x_train, y_train = build_set("train.csv")
+dataset_path = sys.argv[1]
+test_dataset_path = sys.argv[1]
+x_train, y_train = build_set(dataset_path)
 x_train, x_test, y_train, y_test = train_test_split(
     x_train, y_train, test_size=0.3, shuffle=True)
 
 grid = {
-    'n_estimators': [1400, 1600], # 600, 800, 1000, 1200,
-    'max_features': ['sqrt', 'log2'],
-    'max_depth': [20, 24],
+    'n_estimators': [400,500,600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2200, 2400],
+    'max_features': ['sqrt'],
+    'max_depth': [16, 18, 20, 24, 28, 30, 32],
     'random_state': [18]
 }
 # show start time
 print(datetime.now())  # Grid Search function
 
-CV_rf = GridSearchCV(estimator=RandomForestClassifier(),
-                     param_grid=grid, cv=5, verbose=10, n_jobs=-1)
+CV_rf = GridSearchCV(estimator=RandomForestClassifier(), param_grid=grid, cv=5, verbose=10, n_jobs=-1)
 
 # Calling Method
 
 CV_rf.fit(x_train, y_train)
 ## uncomment here to plot he gridSearch graph
-plot_grid_search(CV_rf.cv_results_, grid['n_estimators'], grid['max_depth'], 'N Estimators', 'Max Depth')
+# plot_grid_search(CV_rf.cv_results_, grid['n_estimators'], grid['max_depth'], 'N Estimators', 'Max Depth')
 
 # show end time
 print(datetime.now())
@@ -153,12 +162,13 @@ print("\n The best parameters across ALL searched params:\n", CV_rf.best_params_
 rf = RandomForestClassifier(n_estimators=CV_rf.best_params_["n_estimators"], max_features='sqrt',
                             max_depth=CV_rf.best_params_["max_depth"], random_state=CV_rf.best_params_["random_state"])
 
-
 rf.fit(x_train, y_train)
 print(rf.predict(x_test))
+
 prediction = filter(rf.predict(x_test))
 print("Accuracy: ", compute_accuracy(y_test, prediction))
 print(confusion_matrix(filter(y_test), prediction))
-x_test_submit = build_submit_set("test.csv")
+
+x_test_submit = build_submit_set(test_dataset_path)
 prediction = filter(rf.predict(x_test_submit))
-submission(prediction)
+submission(prediction, test_dataset_path)
