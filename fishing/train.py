@@ -81,10 +81,10 @@ def build_submit_set(path):
 def plot_grid_search(cv_results, grid_param_1, grid_param_2, name_param_1, name_param_2):
     # Get Test Scores Mean and std for each grid search
     scores_mean = cv_results['mean_test_score']
-    scores_mean = np.array(scores_mean).reshape(len(grid_param_2), len(grid_param_1))
+    scores_mean = np.array(scores_mean).reshape(1, len(cv_results['params']))
 
     scores_sd = cv_results['std_test_score']
-    scores_sd = np.array(scores_sd).reshape(len(grid_param_2), len(grid_param_1))
+    scores_sd = np.array(scores_sd).reshape(1, len(cv_results['params']))
 
     # Plot Grid search scores
     _, ax = plt.subplots(1, 1)
@@ -129,9 +129,9 @@ x_train, x_test, y_train, y_test = train_test_split(
     x_train, y_train, test_size=0.3, shuffle=True)
 
 grid = {
-    'n_estimators': [600, 800, 1000, 1200, 1400, 1600, 1800, 2000],
-    'max_features': ['sqrt'],
-    'max_depth': [20, 24, 28, 30, 32],
+    'n_estimators': [1400, 1600], # 600, 800, 1000, 1200,
+    'max_features': ['sqrt', 'log2'],
+    'max_depth': [20, 24],
     'random_state': [18]
 }
 # show start time
@@ -144,11 +144,11 @@ CV_rf = GridSearchCV(estimator=RandomForestClassifier(),
 
 CV_rf.fit(x_train, y_train)
 ## uncomment here to plot he gridSearch graph
-#plot_grid_search(CV_rf.cv_results_, grid['n_estimators'], grid['max_depth'], 'N Estimators', 'Max Depth')
+plot_grid_search(CV_rf.cv_results_, grid['n_estimators'], grid['max_depth'], 'N Estimators', 'Max Depth')
 
 # show end time
 print(datetime.now())
-print("\n The best parameters across ALL searched params:\n", rf.best_params_)
+print("\n The best parameters across ALL searched params:\n", CV_rf.best_params_)
 
 rf = RandomForestClassifier(n_estimators=CV_rf.best_params_["n_estimators"], max_features='sqrt',
                             max_depth=CV_rf.best_params_["max_depth"], random_state=CV_rf.best_params_["random_state"])
